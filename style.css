@@ -18,7 +18,7 @@ img {
 .hero {
     background-image: url('Images/weaving.png');
     height: 25vh;
-    font-size: larger;
+    font-size: 3em;
     background-size: cover;
     background-position: center;
     display: flex;
