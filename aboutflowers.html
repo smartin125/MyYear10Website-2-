@@ -22,30 +22,41 @@
         <!-- the topic title a big bar with text in it -->
         <div class="topic-title">
             <div style="display: flex; justify-content: space-between;">
-  <h1><span>Image Creation</span></h1>
+  <h1><span>Petal Patterns</span></h1>
   <h1 style="color:white"><span><a href="index.html">Home</a></span></h1>
 </div>
         </div>
-                <div class="topic-content">
+        <div class="topic-content">
     <div class="topic-card topic-card-wide">
-        <h2>In this topic, I created images using Inkscape and Gimp. Below are a few of the images I have made.</h2>
+        <h2>from turtle import *<br>
+def dandelion(x, y, length):<br>
+  penup()<br>
+  goto(x,-150)<br>
+  pendown()<br>
+  pensize(3)<br>
+  pencolor('#91F485')<br>
+  angle = 360/40<br>
+  goto(x,y)<br>
+  for i in range(20):<br>
+    pencolor("#0085C7")<br>
+    forward(length)<br>
+    backward(length)<br>
+    left(angle)<br>
+    pencolor("#009F3D")<br>
+    forward(length)<br>
+    backward(length)<br>
+    left(angle)<br><br>
+  
+    
+
+if __name__ == "__main__":<br>
+  bgcolor('#ECFAF5')<br>
+  dandelion(-0, 50, 60)</h2>
+    </div>
+        <div class="topic-card topic-card-image-only">
+        <img src="Videos/Field_of_Flowers.gif" alt="Field_of_Flowers">
     </div>
         </div>
-        <!-- now a three column grid of images -->
-        <div class="topic-content">
-            <!-- one "card" which includes an image with a text below it -->
-            <div class="topic-card">
-                <img src="Images/Background_taskv3.png" alt="Lake Background">
-                <h2 class="topic-card-text">Lake Background</h2>
-            </div>
-            <div class="topic-card">
-                <img src="Images/Parrotdistort.png" alt="Distorted Parrots">
-                <h2 class="topic-card-text">Distorted Parrots</h2>
-            </div>
-            <div class="topic-card">
-                <img src="Images/Bear.png" alt="Bear">
-                <h2 class="topic-card-text">Bear</h2>
-            </div>
         </div>
     </section>
 <!-- End of topic one------------------------------------------------------------------------------------------ -->

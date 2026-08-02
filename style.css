@@ -1,124 +1,154 @@
-/* A simple css reset */
-body,
-html {
+/* Universal reset for predictable spacing and sizing */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+html,
+body {
     height: 100%;
-    /* The Font Family- Really important!! */
     font-family: Arial, sans-serif;
-    box-sizing: border-box;
+    background-color: #f4f4f4; /* Clean background fallback */
 }
 
-/* reset for images to ensure they ar 100% of the parent container width */
+/* Global image handling */
 img {
+    display: block;
     width: 100%;
+    max-width: 100%;
 }
 
-/* The hero section styling- use your OWN Hero Image URL here */
+/* Global Link Styling */
+a {
+    color: white;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: #0056b3;
+}
+
+/* Hero Section */
 .hero {
-    background-image: url('Images/Lake Background Cropped.png');
-    height: 25vh;
-    font-size: 1.5em;
-    background-size: cover;
-    background-position: center;
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    color: white;
+    height: 25vh;
+    min-height: 200px; /* Prevents text spill on small screens */
+    background-image: url('Images/Lake Background Cropped.png');
+    background-size: cover;
+    background-position: center;
     text-align: center;
-    position: relative;
 }
 
-a{
-    color: white;
-    text-decoration: none;
-}
-
-a:hover{
-    color:#0056b3;
-}
-
-/* BIG text styling for the hero section text */
 .hero-text {
-    font-size: 4em;
+    font-size: clamp(2em, 5vw, 4em); /* Responsively scales font size */
     font-weight: bold;
-    color: black;
+    color: #ffffff; /* Changed to white for better readability on backgrounds */
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6); /* Ensures readability */
 }
 
-/* nice big font on a banner style background */
-.topic-title{
+/* Section Header Banners */
+.topic-title {
     color: white;
-    font-size: 2em;
-    padding: 0.1em 3em;
-    background-color: rgb(8 72 49);
+    font-size: 1.75em;
+    padding: 0.5em 10%; /* Percentage padding scales better than static ems */
+    background-color: rgb(8, 72, 49);
 }
 
-/* Three column grid with a nice big gap */
+/* Responsive Grid Layouts */
 .topic-content {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Clean 3-column layout */
-    gap: 2em; /* Reduced from 6em so content doesn't break on standard screens */
-    width: 70%;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Auto-breaks columns on mobile */
+    gap: 2em;
+    width: 85%;
+    max-width: 1200px; /* Stops layout from stretching too wide on huge monitors */
     margin: 3em auto;
 }
-.topic-card-linked img {
-    width: 100%;
-    height: 250px;      /* Adjust this pixel value to change image height */
-    object-fit: cover;  /* Perfectly crops your image to fit the container */
-    border-radius: 0.25em;
-    margin-bottom: 1em; /* Pushes card text down neatly */
-}
-.topic-card img {
-    width: 100%;
-    height: 250px;      /* Adjust this pixel value to change image height */
-    object-fit: cover;  /* Perfectly crops your image to fit the container */
-    border-radius: 0.25em;
-    margin-bottom: 1em; /* Pushes card text down neatly */
+
+.topic-content-wide {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2em;
+    width: 85%;
+    max-width: 1200px;
+    margin: 3em auto;
 }
 
-/* Styling for the individual topic cards rounded edges background color and a drop shadow */
+/* Shared Card Base Styles */
+.topic-card, 
 .topic-card-linked {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1em;
+    border-radius: 0.5em;
     background-color: rgb(147, 148, 157);
     color: white;
-    padding: 1em;
-    border-radius: 0.5em;
-    box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.2);
-    
-    /* Forces the card to flex and fill space evenly */
-    display: flex;
-    flex-direction: column; 
-    height: 100%; /* Ensures they stretch to match the tallest card */
-}
- .topic-card-linked:hover {
-    /* Moves the button 4px down and 4px right */
-    transform: translate(4px, 4px); 
-    
-    /* Flattens the shadow to look "pushed" */
-    box-shadow: 0px 0px 0px #0056b3; 
-  }
-
-.topic-card{
-    background-color: rgb(147 148 157);
-    color: white;
-    padding: 1em;
-    border-radius: 0.5em;
-    box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); /* Softer, modern drop shadow */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Card Hover Animation */
+.topic-card-linked:hover {
+    transform: translateY(-4px); /* Modern lift effect instead of pushing down-right */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 
-/* Styling for the topic card titles */
-.topic-card-text{
+.topic-card img,
+.topic-card-linked img {
+    height: 250px;
+    object-fit: cover;
+    border-radius: 0.25em;
+    margin-bottom: 1em;
+}
+
+.topic-card-text {
     font-size: 1.5em;
     margin-bottom: 0.5em;
-    /* center align text */
     text-align: center;
 }
 
-
-/* Styling for a footer section to take a bit of space at the bottom of the page */
-.footer{
-    background-color: rgb(8 72 49);
+/* Footer Section */
+.footer {
+    background-color: rgb(8, 72, 49);
     color: white;
     text-align: right;
-    padding: 3em 3em;
+    padding: 3em;
 }
+@media (min-width: 768px) {
+    .topic-card-wide {
+        grid-column: span 2;
+    }
+}
+.topic-card-image-only {
+    padding: 1em;
+}
+.topic-card-image-only img {
+    margin-bottom: 0;
+    display: block;
+}
+/* Center-aligned row for special item grouping */
+.topic-content-centered {
+    display: flex;
+    justify-content: center; 
+    align-items: stretch;    
+    gap: 2em;                
+    width: 85%;
+    max-width: 1200px;
+    margin: 0 auto 3em auto; 
+}
+
+/* Forces cards inside the centered container to match regular grid sizes */
+.topic-content-centered .topic-card,
+.topic-content-centered .topic-card-linked {
+    width: 100%;
+    max-width: 320px; /* Adjust this number to perfectly match your layout's column widths */
+}
+
+

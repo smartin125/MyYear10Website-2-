@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guaranteed Pure JS Python-Style Turtle</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; color: #333; }
+        .container { display: flex; gap: 20px; flex-wrap: wrap; max-width: 1200px; margin: 0 auto; }
+        .editor-section, .display-section { flex: 1; min-width: 320px; }
+        textarea { width: 100%; height: 300px; font-family: monospace; font-size: 14px; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+        button { background: #22c55e; color: white; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; border-radius: 4px; }
+        button:hover { background: #16a34a; }
+        #canvas-container { position: relative; width: 100%; height: 400px; border: 2px solid #ccc; border-radius: 4px; background: #ffffff; margin-top: 10px; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #error-output { background: #1e1e1e; color: #ff3333; padding: 10px; font-family: monospace; border-radius: 4px; margin-top: 10px; display: none; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+    <h1>Guaranteed Python-Style Turtle Console</h1>
+    <p>Type your turtle drawing steps below and click Run Code. (Runs instantly offline without CDNs!)</p>
+
+    <div class="container">
+        <!-- Text Input Window -->
+        <div class="editor-section">
+<textarea id="turtle-code"># Basic Python Turtle Commands Supported:
+# forward(distance), left(angle), right(angle), color("name")
+
+color("red")
+forward(80)
+left(90)
+
+color("purple")
+forward(80)
+left(90)
+
+color("blue")
+forward(80)
+left(90)
+
+color("green")
+forward(80)
+left(90)
+</textarea>
+            <button onclick="executeNativeTurtle()">Run Code</button>
+            <div id="error-output"></div>
+        </div>
+
+        <!-- Graphic Render Window -->
+        <div class="display-section">
+            <h3>Turtle Canvas Display</h3>
+            <div id="canvas-container">
+                <canvas id="paintCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+        <script type="text/javascript">
+        // Global interval variable so we can reset it on new runs
+        let drawingInterval = null;
+
+        function executeNativeTurtle() {
+            // Clear any active running loops before starting a new run
+            if (drawingInterval) clearInterval(drawingInterval);
+
+            const canvas = document.getElementById("paintCanvas");
+            const ctx = canvas.getContext("2d");
+            const errBox = document.getElementById("error-output");
+            
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            errBox.style.display = "none";
+            errBox.innerText = "";
+
+            let tState = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                angle: 0,
+                isPenDown: true,
+                strokeColor: "#000000"
+            };
+
+            // Mapping commands to our internal logic engine
+            const commands = {
+                forward: (dist) => {
+                    const rad = (tState.angle * Math.PI) / 180;
+                    const nextX = tState.x + dist * Math.cos(rad);
+                    const nextY = tState.y - dist * Math.sin(rad);
+                    
+                    if (tState.isPenDown) {
+                        ctx.beginPath();
+                        ctx.moveTo(tState.x, tState.y);
+                        ctx.lineTo(nextX, nextY);
+                        ctx.strokeStyle = tState.strokeColor;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+                    tState.x = nextX;
+                    tState.y = nextY;
+                },
+                left: (deg) => { tState.angle = (tState.angle + deg) % 360; },
+                right: (deg) => { tState.angle = (tState.angle - deg) % 360; },
+                color: (colorStr) => { tState.strokeColor = colorStr.replace(/['"]/g, ''); }, // strip quotes
+                penup: () => { tState.isPenDown = false; },
+                pendown: () => { tState.isPenDown = true; }
+            };
+
+            // Read lines and safely isolate execution values
+            const rawLines = document.getElementById("turtle-code").value.split("\n");
+            let executionQueue = [];
+
+            for (let line of rawLines) {
+                let cleanLine = line.trim();
+                if (!cleanLine || cleanLine.startsWith("#")) continue;
+                executionQueue.push(cleanLine);
+            }
+
+            let currentStep = 0;
+
+            // Timer Loop: Processes exactly 1 step every 200 milliseconds (Slow Speed)
+            drawingInterval = setInterval(() => {
+                if (currentStep >= executionQueue.length) {
+                    clearInterval(drawingInterval); // Stop loop when commands run out
+                    return;
+                }
+
+                let currentLine = executionQueue[currentStep];
+                currentStep++;
+
+                try {
+                    // Quick parser to match string functions: e.g. "forward(80)" -> command "forward", argument "80"
+                    let match = currentLine.match(/^(\w+)\((.*)\)$/);
+                    if (match) {
+                        let cmdName = match[1];
+                        let cmdArg = match[2].trim();
+
+                        if (commands[cmdName]) {
+                            // Check if parameter is a number or color text string
+                            let parsedArg = isNaN(cmdArg) ? cmdArg : Number(cmdArg);
+                            commands[cmdName](parsedArg);
+                        } else {
+                            throw new Error(`Command "${cmdName}" is not supported.`);
+                        }
+                    } else {
+                        throw new Error(`Invalid line format: "${currentLine}"`);
+                    }
+                } catch (err) {
+                    clearInterval(drawingInterval);
+                    errBox.style.display = "block";
+                    errBox.innerText = `Runtime Error at line ${currentStep}: ` + err.message;
+                }
+            }, 200); // <-- Adjust this speed value higher for slower speeds, lower for faster speeds.
+        }
+    </script>
+
+
+</body>
+</html>
