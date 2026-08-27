@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Image Game Leaderboard</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --ink: #f5f1e8;
+            --muted: #b9c0bc;
+            --panel: rgba(20, 31, 34, 0.9);
+            --line: rgba(245, 241, 232, 0.2);
+            --accent: #f1b24a;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            padding: 2rem;
+            color: var(--ink);
+            background: radial-gradient(circle at 80% 10%, rgba(241, 178, 74, 0.18), transparent 28rem), linear-gradient(135deg, #111c22 0%, #203f3c 55%, #172328 100%);
+            font-family: Georgia, 'Times New Roman', serif;
+        }
+        main { width: min(100%, 720px); border: 1px solid var(--line); background: var(--panel); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3); }
+        header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; padding: 1.6rem 2rem 1.25rem; border-bottom: 1px solid var(--line); }
+        h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.7rem); font-weight: normal; }
+        .eyebrow { margin: 0 0 0.35rem; color: var(--accent); font: 700 0.75rem/1.2 Arial, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; }
+        a { color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; font: 1rem Arial, sans-serif; }
+        th, td { padding: 1rem 2rem; text-align: left; border-bottom: 1px solid var(--line); }
+        th:last-child, td:last-child { text-align: right; }
+        th { color: var(--muted); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; }
+        .empty { padding: 2rem; color: var(--muted); font: 0.95rem/1.5 Arial, sans-serif; }
+        #signed-in-user { padding: 1rem 2rem 0; color: var(--muted); font: 0.9rem Arial, sans-serif; }
+        @media (max-width: 600px) { body { padding: 0; } header, th, td { padding-left: 1.2rem; padding-right: 1.2rem; } }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <div>
+                <p class="eyebrow">The Image Game</p>
+                <h1>Leaderboard</h1>
+            </div>
+            <a href="testimage.html">Back to image</a>
+        </header>
+        <p id="signed-in-user"></p>
+        <div id="leaderboard-content"></div>
+    </main>
+    <script>
+        const content = document.querySelector('#leaderboard-content');
+        const scores = JSON.parse(localStorage.getItem('imageQuizScores') || '{}');
+        const imageFinders = JSON.parse(localStorage.getItem('imageQuizFinders') || '{}');
+        const signedInUser = localStorage.getItem('imageQuizUser');
+        const findTimes = {};
+        Object.values(imageFinders).flat().forEach(finder => {
+            if (!findTimes[finder.username]) findTimes[finder.username] = [];
+            findTimes[finder.username].push(finder.seconds);
+        });
+        const averageTimes = Object.fromEntries(Object.entries(findTimes).map(([username, times]) => [username, times.reduce((total, seconds) => total + seconds, 0) / times.length]));
+        const rankedUsers = Object.entries(scores).filter(([username]) => username !== 'Masterkey').sort((first, second) => {
+            const pointsDifference = second[1] - first[1];
+            if (pointsDifference) return pointsDifference;
+            const firstAverage = averageTimes[first[0]];
+            const secondAverage = averageTimes[second[0]];
+            if (firstAverage !== undefined && secondAverage !== undefined) return firstAverage - secondAverage;
+            if (firstAverage !== undefined) return -1;
+            if (secondAverage !== undefined) return 1;
+            return first[0].localeCompare(second[0]);
+        });
+
+        if (signedInUser && signedInUser !== 'Masterkey') {
+            const average = averageTimes[signedInUser];
+            document.querySelector('#signed-in-user').textContent = `Logged in as ${signedInUser} - ${scores[signedInUser] || 0} points - Average: ${average === undefined ? 'No finds' : `${average.toFixed(1)} seconds`}`;
+        }
+
+        if (!rankedUsers.length) {
+            content.innerHTML = '<p class="empty">No points have been scored yet. Log in on the image page to get started.</p>';
+        } else {
+            const rows = rankedUsers.map(([username, points], index) => `<tr><td>${index + 1}</td><td>${escapeHtml(username)}</td><td>${points}</td><td>${averageTimes[username] === undefined ? 'No finds' : `${averageTimes[username].toFixed(1)} seconds`}</td></tr>`).join('');
+            content.innerHTML = `<table><thead><tr><th>Rank</th><th>Username</th><th>Points</th><th>Average time</th></tr></thead><tbody>${rows}</tbody></table>`;
+        }
+
+        function escapeHtml(value) {
+            return value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]);
+        }
+    </script>
+</body>
+</html>

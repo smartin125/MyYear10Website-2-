@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Image Game Rules</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --ink: #f5f1e8;
+            --muted: #b9c0bc;
+            --panel: rgba(20, 31, 34, 0.9);
+            --line: rgba(245, 241, 232, 0.2);
+            --accent: #f1b24a;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            padding: 2rem;
+            color: var(--ink);
+            background: radial-gradient(circle at 80% 10%, rgba(241, 178, 74, 0.18), transparent 28rem), linear-gradient(135deg, #111c22 0%, #203f3c 55%, #172328 100%);
+            font-family: Georgia, 'Times New Roman', serif;
+        }
+        main { width: min(100%, 720px); border: 1px solid var(--line); background: var(--panel); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3); }
+        header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; padding: 1.6rem 2rem 1.25rem; border-bottom: 1px solid var(--line); }
+        h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.7rem); font-weight: normal; }
+        .eyebrow { margin: 0 0 0.35rem; color: var(--accent); font: 700 0.75rem/1.2 Arial, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; }
+        a { color: var(--accent); }
+        section { padding: 1.5rem 2rem 2rem; font: 1rem/1.6 Arial, sans-serif; }
+        h2 { margin: 0 0 1rem; font: 1.2rem Georgia, 'Times New Roman', serif; }
+        li { margin-bottom: 0.8rem; }
+        @media (max-width: 600px) { body { padding: 0; } header, section { padding-left: 1.2rem; padding-right: 1.2rem; } }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <div>
+                <p class="eyebrow">The Image Game</p>
+                <h1>Rules</h1>
+            </div>
+            <nav aria-label="Page navigation">
+                <a href="testimage.html">Back</a>
+            </nav>
+        </header>
+        <section>
+            <h2>How to play</h2>
+            <ul>
+                <li>You must find the image and its title through a web search.</li>
+                <li>Text-based searches are allowed.</li>
+                <li>Reverse-image searches and all other non-text-based searches are not allowed.</li>
+                
+                <li>Once you find the image, login and paste the title of the image into the submission box.</li>
+                <li>After submitting, if you are correct, you will earn points. Otherwise, keep searching!</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>

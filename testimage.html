@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Yesterday's Wikimedia Image</title>
+	<title>The Image Game</title>
 	<style>
 		:root {
 			color-scheme: dark;
@@ -12,6 +12,7 @@
 			--panel: rgba(20, 31, 34, 0.88);
 			--line: rgba(245, 241, 232, 0.2);
 			--accent: #f1b24a;
+			--danger: #f28f8f;
 		}
 
 		* { box-sizing: border-box; }
@@ -47,12 +48,62 @@
 		}
 
 		h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.7rem); font-weight: normal; }
+		.subtitle { margin: 0.35rem 0 0; color: var(--muted); font: 0.9rem Arial, sans-serif; }
 		.eyebrow { margin: 0 0 0.35rem; color: var(--accent); font: 700 0.75rem/1.2 Arial, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; }
 		#date { margin: 0; color: var(--muted); font: 0.8rem Arial, sans-serif; text-align: right; }
 
 		figure { margin: 0; }
+		#master-image-link { display: block; pointer-events: none; }
+		#master-image-link.visible { pointer-events: auto; }
 		#image { width: 100%; max-height: 68vh; min-height: 260px; object-fit: contain; background: #0d1518; }
 		#status { margin: 0; padding: 1.5rem 2rem; color: var(--muted); font: 0.9rem/1.5 Arial, sans-serif; }
+		#attribution { margin: 0; padding: 0.75rem 2rem; color: var(--muted); font: 0.8rem Arial, sans-serif; }
+		#finders { padding: 0.75rem 2rem; color: var(--muted); font: 0.85rem/1.5 Arial, sans-serif; }
+		#finders h2 { margin: 0 0 0.4rem; color: var(--ink); font-size: 1rem; }
+		#finders ul { margin: 0; padding-left: 1.2rem; }
+		#account, #challenge { padding: 1rem 2rem 1.5rem; border-top: 1px solid var(--line); font: 0.9rem/1.5 Arial, sans-serif; }
+		#account { display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; padding-top: 0.75rem; padding-bottom: 0.75rem; }
+		#account-status, #account-toggle { white-space: nowrap; }
+		#account.login-open #account-toggle { display: none; }
+		#account form, #challenge form { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+		input, button { border: 1px solid var(--line); border-radius: 0.2rem; padding: 0.65rem 0.8rem; font: inherit; }
+		input { min-width: 12rem; color: var(--ink); background: rgba(255, 255, 255, 0.08); }
+		button { color: #172328; background: var(--accent); cursor: pointer; font-weight: 700; }
+		button:hover { filter: brightness(1.08); }
+		#account-toggle { color: var(--ink); background: transparent; }
+		.page-link { display: inline-block; border: 1px solid var(--line); border-radius: 0.2rem; padding: 0.65rem 0.8rem; color: var(--ink); background: transparent; font: 700 0.9rem Arial, sans-serif; text-decoration: none; }
+		.page-link:hover { color: var(--accent); background: rgba(255, 255, 255, 0.08); }
+		header nav { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+		#login-panel { display: none; width: 100%; justify-content: flex-end; }
+		#login-panel.visible { display: flex; }
+		#password-change { display: none; width: 100%; justify-content: flex-end; }
+		#password-change.visible { display: flex; }
+		#account #password-change-form { display: none; flex-wrap: wrap; justify-content: flex-end; }
+		#account #password-change-form.visible { display: flex; }
+		#start-password-change[hidden] { display: none; }
+		#cancel-password-change { color: var(--ink); background: transparent; }
+		#account-message, #challenge-message { display: block; min-height: 1.5em; color: var(--muted); }
+		#request-form { margin-top: 0.8rem; }
+		.error { color: var(--danger) !important; }
+		#challenge { display: none; }
+		#challenge.visible { display: block; }
+		#challenge-heading { margin-bottom: 0.8rem; color: var(--ink); font-size: 1rem; }
+		#previous-image-link { display: none; margin-top: 0.8rem; }
+		#previous-image-link.visible { display: inline-block; }
+		#master-panel { display: none; padding: 1rem 2rem 1.5rem; border-top: 1px solid var(--line); font: 0.9rem/1.5 Arial, sans-serif; }
+		#master-panel.visible { display: block; }
+		#master-panel h2 { margin: 0 0 0.8rem; color: var(--ink); font-size: 1rem; }
+		#change-image { margin-bottom: 1rem; }
+		#master-panel form { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+		#master-answer { margin: 0 0 1rem; color: var(--accent); }
+		#approval-form { margin-bottom: 1rem; }
+		#delete-form { margin-bottom: 1rem; }
+		#approval-requests { margin-bottom: 1rem; color: var(--muted); }
+		#approval-requests p { margin-bottom: 0.5rem; }
+		.request-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.5rem; }
+		#master-message { min-height: 1.5em; margin-top: 0.6rem; color: var(--muted); }
+		#leaderboard-link { display: inline-block; margin-top: 0.75rem; }
+		.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
 		a { color: var(--accent); }
 
 		@media (max-width: 600px) {
@@ -66,34 +117,478 @@
 	<main>
 		<header class="heading">
 			<div>
-				<p class="eyebrow">Wikimedia Commons</p>
-				<h1>Image of the day</h1>
+				<h1>The Image Game</h1>
+				<p class="subtitle">By Sam Martin</p>
 			</div>
+			<nav aria-label="Page navigation">
+				<a class="page-link" href="leaderboard.html">Leaderboard</a>
+				<a class="page-link" href="rules.html">Rules</a>
+			</nav>
 		</header>
 
+		<section id="account" aria-label="Account">
+			<span id="account-status">Log in to score this image.</span>
+			<button id="account-toggle" type="button">Log in</button>
+			<div id="login-panel">
+				<form id="login-form">
+					<label><span class="sr-only">Username</span><input id="username" autocomplete="username" placeholder="Username" required></label>
+					<label><span class="sr-only">Password</span><input id="password" type="password" autocomplete="new-password" placeholder="Password (4+ characters)" minlength="4" required></label>
+					<button type="submit">Log in</button>
+				</form>
+				<span id="account-message" role="status"></span>
+				<form id="request-form">
+					<label><span class="sr-only">Username to request</span><input id="requested-username" placeholder="Username to request" required></label>
+					<button type="submit">Request approval</button>
+				</form>
+				<span id="request-message" role="status"></span>
+			</div>
+			<div id="password-change">
+				<button id="start-password-change" type="button">Change password</button>
+				<form id="password-change-form">
+					<label><span class="sr-only">Current password</span><input id="current-password" type="password" autocomplete="current-password" placeholder="Current password" required></label>
+					<label><span class="sr-only">New password</span><input id="new-password" type="password" autocomplete="new-password" placeholder="New password (4+ characters)" minlength="4" required></label>
+					<button type="submit">Confirm</button>
+					<button id="cancel-password-change" type="button">Cancel</button>
+				</form>
+			</div>
+		</section>
+		<section id="master-panel" aria-labelledby="master-heading">
+			<h2 id="master-heading">Master controls</h2>
+			<p id="master-answer">The answer will appear when the image has loaded.</p>
+			<button id="change-image" type="button">Change image</button>
+			<form id="approval-form">
+				<label for="approved-username">Username</label>
+				<input id="approved-username" placeholder="Username to approve" required>
+				<button type="submit">Approve username</button>
+			</form>
+			<form id="delete-form">
+				<label for="delete-username">Username</label>
+				<input id="delete-username" placeholder="Username to delete" required>
+				<button type="submit">Delete account</button>
+			</form>
+			<div id="approval-requests"></div>
+			<form id="points-form">
+				<label for="points-username">Username</label>
+				<input id="points-username" placeholder="Other username" required>
+				<label for="points-value">Points</label>
+				<input id="points-value" type="number" min="0" step="1" value="0" required>
+				<button type="submit">Update points</button>
+			</form>
+			<p id="master-message" role="status" aria-live="polite"></p>
+		</section>
+
 		<figure>
-			<img id="image" alt="" hidden>
+			<a id="master-image-link" href="#" target="_blank" rel="noopener" aria-label="Open this image on Wikimedia Commons">
+				<img id="image" alt="Wikimedia Commons image" draggable="false" hidden>
+			</a>
 		</figure>
+		<p id="attribution">Images sourced from Wikimedia Commons</p>
+		<section id="finders" aria-labelledby="finders-heading">
+			<h2 id="finders-heading">Successful finds</h2>
+			<p id="finders-empty">No one has found this image yet.</p>
+			<ul id="finders-list"></ul>
+		</section>
 		<p id="status" role="status">Loading a random image from the archive...</p>
+		<section id="challenge" aria-labelledby="challenge-heading">
+			<h2 id="challenge-heading">Know the title?</h2>
+			<form id="answer-form">
+				<label for="answer">Enter the image title</label>
+				<input id="answer" autocomplete="off">
+				<button type="submit">Submit answer</button>
+			</form>
+			<p id="challenge-message" role="status" aria-live="polite">Submit an answer to see your result.</p>
+			<a id="previous-image-link" href="#" target="_blank" rel="noopener">View previous image on Wikimedia Commons</a>
+		</section>
 	</main>
 
 	<script>
 		const feedUrl = 'https://api.wikimedia.org/feed/v1/wikipedia/en/featured';
 		const imageElement = document.querySelector('#image');
+		const masterImageLink = document.querySelector('#master-image-link');
 		const statusElement = document.querySelector('#status');
+		const account = document.querySelector('#account');
+		const accountStatus = document.querySelector('#account-status');
+		const accountToggle = document.querySelector('#account-toggle');
+		const loginPanel = document.querySelector('#login-panel');
+		const loginForm = document.querySelector('#login-form');
+		const accountMessage = document.querySelector('#account-message');
+		const requestForm = document.querySelector('#request-form');
+		const requestedUsername = document.querySelector('#requested-username');
+		const requestMessage = document.querySelector('#request-message');
+		const passwordChange = document.querySelector('#password-change');
+		const startPasswordChange = document.querySelector('#start-password-change');
+		const passwordChangeForm = document.querySelector('#password-change-form');
+		const cancelPasswordChange = document.querySelector('#cancel-password-change');
+		const currentPassword = document.querySelector('#current-password');
+		const newPassword = document.querySelector('#new-password');
+		const challenge = document.querySelector('#challenge');
+		const answerForm = document.querySelector('#answer-form');
+		const answerElement = document.querySelector('#answer');
+		const challengeMessage = document.querySelector('#challenge-message');
+		const previousImageLink = document.querySelector('#previous-image-link');
+		const masterPanel = document.querySelector('#master-panel');
+		const masterAnswer = document.querySelector('#master-answer');
+		const changeImageButton = document.querySelector('#change-image');
+		const approvalForm = document.querySelector('#approval-form');
+		const approvedUsername = document.querySelector('#approved-username');
+			const deleteForm = document.querySelector('#delete-form');
+			const deleteUsername = document.querySelector('#delete-username');
+		const pointsForm = document.querySelector('#points-form');
+		const pointsUsername = document.querySelector('#points-username');
+		const pointsValue = document.querySelector('#points-value');
+		const masterMessage = document.querySelector('#master-message');
+		const approvalRequests = document.querySelector('#approval-requests');
+		const findersEmpty = document.querySelector('#finders-empty');
+		const findersList = document.querySelector('#finders-list');
 		const earliestDate = new Date(2004, 0, 1);
+		let currentObjectUrl;
+		let currentAnswer = '';
+		let currentImageId = '';
+		let currentImagePage = '';
+		let currentArchiveDate = '';
+		let currentImageRefreshedAt = 0;
+		const selectedImageStorageKey = 'imageQuizSelectedImage';
+		const previousImageStorageKey = 'imageQuizPreviousImage';
+		const imageFindersStorageKey = 'imageQuizFinders';
+		let loggedInUser = localStorage.getItem('imageQuizUser');
+		const masterUsername = 'Masterkey';
+		const masterPassword = '123456789';
+		const nzstOffsetMilliseconds = 12 * 60 * 60 * 1000;
 
-		function dateKey(date) {
-			return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('/');
+		function readAccounts() { return JSON.parse(localStorage.getItem('imageQuizAccounts') || '{}'); }
+		function readApprovedUsers() { return JSON.parse(localStorage.getItem('imageQuizApprovedUsers') || '{}'); }
+		function readApprovalRequests() { return JSON.parse(localStorage.getItem('imageQuizApprovalRequests') || '{}'); }
+		function readScores() { return JSON.parse(localStorage.getItem('imageQuizScores') || '{}'); }
+		function readFirstGuesses() { return JSON.parse(localStorage.getItem('imageQuizFirstGuesses') || '{}'); }
+		function readImageFinders() { return JSON.parse(localStorage.getItem(imageFindersStorageKey) || '{}'); }
+		function showPreviousImageLink() {
+			try {
+				const previousImage = JSON.parse(localStorage.getItem(previousImageStorageKey) || 'null');
+				if (previousImage?.url) {
+					previousImageLink.href = previousImage.url;
+					previousImageLink.classList.add('visible');
+				}
+			} catch (error) {
+				console.warn('Could not read the previous image link', error);
+			}
+		}
+		function isMasterUser() { return loggedInUser === masterUsername; }
+		function escapeHtml(value) { return value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]); }
+		function approveUsername(username) {
+			const approvedUsers = readApprovedUsers();
+			approvedUsers[username] = true;
+			localStorage.setItem('imageQuizApprovedUsers', JSON.stringify(approvedUsers));
+			const requests = readApprovalRequests();
+			delete requests[username];
+			localStorage.setItem('imageQuizApprovalRequests', JSON.stringify(requests));
+		}
+		function deleteAccount(username) {
+			const accounts = readAccounts();
+			const approvedUsers = readApprovedUsers();
+			const requests = readApprovalRequests();
+			const scores = readScores();
+			const completed = JSON.parse(localStorage.getItem('imageQuizCompleted') || '{}');
+			delete accounts[username];
+			delete approvedUsers[username];
+			delete requests[username];
+			delete scores[username];
+			Object.keys(completed).filter(key => key.startsWith(`${username}:`)).forEach(key => delete completed[key]);
+			localStorage.setItem('imageQuizAccounts', JSON.stringify(accounts));
+			localStorage.setItem('imageQuizApprovedUsers', JSON.stringify(approvedUsers));
+			localStorage.setItem('imageQuizApprovalRequests', JSON.stringify(requests));
+			localStorage.setItem('imageQuizScores', JSON.stringify(scores));
+			localStorage.setItem('imageQuizCompleted', JSON.stringify(completed));
+		}
+		function renderApprovalRequests() {
+			if (!isMasterUser()) return;
+			const requests = Object.keys(readApprovalRequests());
+			approvalRequests.innerHTML = requests.length ? `<p>Pending username requests:</p>${requests.map(username => `<div class="request-row"><span>${escapeHtml(username)}</span><button type="button" data-approve-username="${escapeHtml(username)}">Approve</button></div>`).join('')}` : '<p>No pending username requests.</p>';
+		}
+		function formatElapsedTime(seconds) {
+			if (seconds < 60) return `${seconds} second${seconds === 1 ? '' : 's'}`;
+			const minutes = Math.floor(seconds / 60);
+			const remainingSeconds = seconds % 60;
+			return `${minutes} minute${minutes === 1 ? '' : 's'} ${remainingSeconds} second${remainingSeconds === 1 ? '' : 's'}`;
+		}
+		function renderImageFinders() {
+			const finders = readImageFinders()[currentImageId] || [];
+			findersEmpty.hidden = finders.length > 0;
+			findersList.innerHTML = finders.map(finder => `<li>${escapeHtml(finder.username)} found it in ${formatElapsedTime(finder.seconds)}.</li>`).join('');
+		}
+		async function passwordHash(password) {
+			const bytes = new TextEncoder().encode(password);
+			const digest = await crypto.subtle.digest('SHA-256', bytes);
+			return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+		}
+		function updateAccountUi() {
+			const loggedIn = Boolean(loggedInUser);
+			accountStatus.textContent = isMasterUser() ? 'Masterkey - administrator' : loggedIn ? `${loggedInUser} - ${readScores()[loggedInUser] || 0} points` : 'Log in to score this image.';
+			accountToggle.textContent = loggedIn ? 'Log out' : 'Log in';
+			challenge.classList.toggle('visible', loggedIn && !isMasterUser());
+			masterPanel.classList.toggle('visible', isMasterUser());
+			passwordChange.classList.toggle('visible', loggedIn && !isMasterUser());
+			if (!loggedIn || isMasterUser()) {
+				passwordChangeForm.classList.remove('visible');
+				startPasswordChange.hidden = true;
+			} else if (!passwordChangeForm.classList.contains('visible')) {
+				startPasswordChange.hidden = false;
+			}
+			masterImageLink.classList.toggle('visible', isMasterUser());
+			if (isMasterUser()) masterAnswer.textContent = currentAnswer ? `Correct answer: ${currentAnswer}` : 'The answer will appear when the image has loaded.';
+			renderApprovalRequests();
 		}
 
+		accountToggle.addEventListener('click', () => {
+			if (loggedInUser) {
+				loggedInUser = null;
+				localStorage.removeItem('imageQuizUser');
+				loginPanel.classList.remove('visible');
+				account.classList.remove('login-open');
+				updateAccountUi();
+				return;
+			}
+			const isLoginPanelVisible = loginPanel.classList.toggle('visible');
+			account.classList.toggle('login-open', isLoginPanelVisible);
+			accountMessage.textContent = 'Use a username approved by the administrator.';
+		});
+
+		startPasswordChange.addEventListener('click', () => {
+			startPasswordChange.hidden = true;
+			passwordChangeForm.classList.add('visible');
+			currentPassword.focus();
+		});
+
+		cancelPasswordChange.addEventListener('click', () => {
+			passwordChangeForm.reset();
+			passwordChangeForm.classList.remove('visible');
+			startPasswordChange.hidden = false;
+			accountMessage.textContent = '';
+			accountMessage.classList.remove('error');
+		});
+
+		passwordChangeForm.addEventListener('submit', async event => {
+			event.preventDefault();
+			if (!loggedInUser || isMasterUser()) return;
+			if (newPassword.value.length < 4) {
+				accountMessage.textContent = 'New password must be at least four characters long.';
+				accountMessage.classList.add('error');
+				return;
+			}
+			const accounts = readAccounts();
+			const currentHash = await passwordHash(currentPassword.value);
+			if (accounts[loggedInUser] !== currentHash) {
+				accountMessage.textContent = 'The current password is incorrect.';
+				accountMessage.classList.add('error');
+				return;
+			}
+			accounts[loggedInUser] = await passwordHash(newPassword.value);
+			localStorage.setItem('imageQuizAccounts', JSON.stringify(accounts));
+			accountMessage.textContent = 'Password changed successfully.';
+			accountMessage.classList.remove('error');
+			passwordChangeForm.reset();
+			passwordChangeForm.classList.remove('visible');
+			startPasswordChange.hidden = false;
+		});
+
+		requestForm.addEventListener('submit', event => {
+			event.preventDefault();
+			const username = requestedUsername.value.trim();
+			if (!username || username === masterUsername) {
+				requestMessage.textContent = 'Enter a different username.';
+				requestMessage.classList.add('error');
+				return;
+			}
+			if (readApprovedUsers()[username]) {
+				requestMessage.textContent = 'That username is already approved.';
+				return;
+			}
+			const requests = readApprovalRequests();
+			requests[username] = true;
+			localStorage.setItem('imageQuizApprovalRequests', JSON.stringify(requests));
+			requestMessage.classList.remove('error');
+			requestMessage.textContent = 'Approval request sent to the administrator.';
+			requestedUsername.value = '';
+		});
+
+		loginForm.addEventListener('submit', async event => {
+			event.preventDefault();
+			try {
+				const username = document.querySelector('#username').value.trim();
+				const password = document.querySelector('#password').value;
+				if (password.length < 4) {
+					accountMessage.textContent = 'Password must be at least four characters long.';
+					accountMessage.classList.add('error');
+					return;
+				}
+				if (username === masterUsername) {
+					if (password !== masterPassword) throw new Error('master-credentials');
+					loggedInUser = masterUsername;
+					localStorage.setItem('imageQuizUser', masterUsername);
+					accountMessage.classList.remove('error');
+					accountMessage.textContent = '';
+					loginPanel.classList.remove('visible');
+					account.classList.remove('login-open');
+					loginForm.reset();
+					updateAccountUi();
+					return;
+				}
+				const approvedUsers = readApprovedUsers();
+				if (!approvedUsers[username]) {
+					accountMessage.textContent = 'This username has not been approved by the administrator.';
+					accountMessage.classList.add('error');
+					return;
+				}
+				const accounts = readAccounts();
+				const hash = await passwordHash(password);
+				if (accounts[username] && accounts[username] !== hash) {
+					accountMessage.textContent = 'That username and password do not match.';
+					accountMessage.classList.add('error');
+					return;
+				}
+				accounts[username] = hash;
+				localStorage.setItem('imageQuizAccounts', JSON.stringify(accounts));
+				loggedInUser = username;
+				localStorage.setItem('imageQuizUser', username);
+				accountMessage.classList.remove('error');
+				accountMessage.textContent = `Logged in as ${username}.`;
+				loginPanel.classList.remove('visible');
+				account.classList.remove('login-open');
+				loginForm.reset();
+				updateAccountUi();
+			} catch (error) {
+				accountMessage.textContent = error.message === 'master-credentials' ? 'That master password is incorrect.' : 'Login is unavailable in this browser context. Please use a local web server.';
+				accountMessage.classList.add('error');
+			}
+		});
+
+		approvalForm.addEventListener('submit', event => {
+			event.preventDefault();
+			if (!isMasterUser()) return;
+			const username = approvedUsername.value.trim();
+			if (!username || username === masterUsername) {
+				masterMessage.textContent = 'Enter a valid username other than Masterkey.';
+				return;
+			}
+			approveUsername(username);
+			masterMessage.textContent = `${username} is approved to log in.`;
+			approvedUsername.value = '';
+			renderApprovalRequests();
+		});
+
+		deleteForm.addEventListener('submit', event => {
+			event.preventDefault();
+			if (!isMasterUser()) return;
+			const username = deleteUsername.value.trim();
+			if (!username || username === masterUsername) {
+				masterMessage.textContent = 'Enter another username. The Masterkey account cannot be deleted.';
+				return;
+			}
+			if (!confirm(`Delete the account for ${username}?`)) return;
+			deleteAccount(username);
+			masterMessage.textContent = `${username} has been deleted.`;
+			deleteUsername.value = '';
+		});
+
+		approvalRequests.addEventListener('click', event => {
+			const button = event.target.closest('[data-approve-username]');
+			if (!button || !isMasterUser()) return;
+			approveUsername(button.dataset.approveUsername);
+			masterMessage.textContent = `${button.dataset.approveUsername} is approved to log in.`;
+			renderApprovalRequests();
+		});
+
+		pointsForm.addEventListener('submit', event => {
+			event.preventDefault();
+			if (!isMasterUser()) return;
+			const username = pointsUsername.value.trim();
+			const points = Number(pointsValue.value);
+			if (!username || username === masterUsername || !Number.isInteger(points) || points < 0) {
+				masterMessage.textContent = 'Enter another username and a whole number of zero or more points.';
+				return;
+			}
+			const scores = readScores();
+			scores[username] = points;
+			localStorage.setItem('imageQuizScores', JSON.stringify(scores));
+			masterMessage.textContent = `${username} now has ${points} point${points === 1 ? '' : 's'}.`;
+			pointsForm.reset();
+			pointsValue.value = points;
+		});
+
+		changeImageButton.addEventListener('click', async () => {
+			if (!isMasterUser()) return;
+			changeImageButton.disabled = true;
+			changeImageButton.textContent = 'Loading image...';
+			masterAnswer.textContent = 'The answer will appear when the image has loaded.';
+			try {
+				await loadImage(true);
+			} finally {
+				changeImageButton.disabled = false;
+				changeImageButton.textContent = 'Change image';
+			}
+		});
+
+		answerForm.addEventListener('submit', event => {
+			event.preventDefault();
+			challengeMessage.classList.remove('error');
+			if (isMasterUser()) {
+				challengeMessage.textContent = 'Masterkey accounts cannot submit answers.';
+				return;
+			}
+			if (!loggedInUser) {
+				challengeMessage.textContent = 'Please log in before submitting an answer.';
+				challengeMessage.classList.add('error');
+				return;
+			}
+			if (!currentAnswer) {
+				challengeMessage.textContent = 'The image is still loading. Please try again shortly.';
+				challengeMessage.classList.add('error');
+				return;
+			}
+			const scores = readScores();
+			const completed = JSON.parse(localStorage.getItem('imageQuizCompleted') || '{}');
+			if (completed[`${loggedInUser}:${currentImageId}`]) {
+				challengeMessage.textContent = 'You already scored this image.';
+				return;
+			}
+			if (answerElement.value.trim().toLocaleLowerCase() === currentAnswer.trim().toLocaleLowerCase()) {
+				const finders = readImageFinders();
+				const firstGuesses = readFirstGuesses();
+				const pointsAwarded = firstGuesses[currentImageId] ? 1 : 2;
+				scores[loggedInUser] = (scores[loggedInUser] || 0) + pointsAwarded;
+				if (!firstGuesses[currentImageId]) {
+					firstGuesses[currentImageId] = loggedInUser;
+					localStorage.setItem('imageQuizFirstGuesses', JSON.stringify(firstGuesses));
+				}
+				completed[`${loggedInUser}:${currentImageId}`] = true;
+				finders[currentImageId] = finders[currentImageId] || [];
+				finders[currentImageId].push({ username: loggedInUser, seconds: Math.max(0, Math.floor((Date.now() - currentImageRefreshedAt) / 1000)) });
+				localStorage.setItem('imageQuizScores', JSON.stringify(scores));
+				localStorage.setItem('imageQuizCompleted', JSON.stringify(completed));
+				localStorage.setItem(imageFindersStorageKey, JSON.stringify(finders));
+				challengeMessage.textContent = `Correct! You earned ${pointsAwarded} points${pointsAwarded === 2 ? ' for being first' : ''}.`;
+				challengeMessage.classList.remove('error');
+				updateAccountUi();
+				renderImageFinders();
+			} else {
+				challengeMessage.textContent = 'Not quite. Try again.';
+				challengeMessage.classList.add('error');
+			}
+			answerElement.value = '';
+		});
+
+		function dateKey(date) {
+			return [date.getUTCFullYear(), String(date.getUTCMonth() + 1).padStart(2, '0'), String(date.getUTCDate()).padStart(2, '0')].join('/');
+		}
+
+		function nzstNow() { return new Date(Date.now() + nzstOffsetMilliseconds); }
+
 		function dailySeed() {
-			const today = new Date();
+			const today = nzstNow();
 			return Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) / 86400000;
 		}
 
 		function archivedDateForAttempt(attempt) {
-			const yesterday = new Date();
+			const yesterday = nzstNow();
 			yesterday.setUTCHours(0, 0, 0, 0);
 			yesterday.setUTCDate(yesterday.getUTCDate() - 1);
 			const availableDays = Math.floor((yesterday - earliestDate) / 86400000);
@@ -101,29 +596,96 @@
 			return new Date(earliestDate.getTime() + Math.floor((seed % 1) * availableDays) * 86400000);
 		}
 
-		function showImage(image) {
-			const imageUrl = image.thumbnail?.source || image.image;
-			imageElement.src = imageUrl;
-			imageElement.alt = image.description || image.title;
-			imageElement.onload = () => {
-				imageElement.hidden = false;
-				statusElement.hidden = true;
-			};
-			imageElement.onerror = () => {
-				statusElement.hidden = false;
-				statusElement.textContent = 'The selected image could not be displayed. Please refresh to try another one.';
-			};
+		function randomArchivedDate() {
+			const yesterday = nzstNow();
+			yesterday.setUTCHours(0, 0, 0, 0);
+			yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+			const availableDays = Math.floor((yesterday - earliestDate) / 86400000);
+			return new Date(earliestDate.getTime() + Math.floor(Math.random() * availableDays) * 86400000);
 		}
 
-		async function loadImage() {
-			for (let attempt = 0; attempt < 5; attempt += 1) {
-				const date = archivedDateForAttempt(attempt);
+		function selectionDay() { return dateKey(nzstNow()); }
+
+		function savedImageSelection() {
+			try {
+				const saved = JSON.parse(localStorage.getItem(selectedImageStorageKey) || 'null');
+				if (saved?.day === selectionDay() && typeof saved.date === 'string' && !Number.isNaN(new Date(saved.date).getTime())) return saved;
+			} catch (error) {
+				console.warn('Could not read the saved image selection', error);
+			}
+			return '';
+		}
+
+		function imageAnswer(image) {
+			if (typeof image.title === 'string' && image.title.trim()) return cleanImageTitle(image.title);
+			if (typeof image.description === 'string' && image.description.trim()) return image.description.trim();
+			if (image.description && typeof image.description === 'object') {
+				const descriptionText = image.description.text || image.description.value || image.description.en;
+				if (typeof descriptionText === 'string' && descriptionText.trim()) return descriptionText.trim();
+			}
+			return '';
+		}
+
+		function cleanImageTitle(title) {
+			return title.trim().replace(/^File:\s*/i, '').replace(/\.(?:jpe?g|png|gif|webp|svg|tiff?)$/i, '');
+		}
+
+		async function showImage(image) {
+			currentAnswer = imageAnswer(image);
+			currentImageId = image.title || image.image || image.thumbnail?.source || '';
+			currentImagePage = image.file_page || `https://commons.wikimedia.org/wiki/${encodeURIComponent(image.title || '')}`;
+			masterImageLink.href = currentImagePage;
+			if (isMasterUser()) masterAnswer.textContent = `Correct answer: ${currentAnswer}`;
+			challengeMessage.textContent = '';
+			challengeMessage.classList.remove('error');
+			const imageUrl = image.thumbnail?.source || image.image;
+			const imageResponse = await fetch(imageUrl);
+			if (!imageResponse.ok) throw new Error(`Image returned ${imageResponse.status}`);
+			const imageBlob = await imageResponse.blob();
+			const objectUrl = URL.createObjectURL(imageBlob);
+			await new Promise((resolve, reject) => {
+				imageElement.onload = resolve;
+				imageElement.onerror = () => reject(new Error('The selected image could not be displayed'));
+				imageElement.src = objectUrl;
+			});
+			if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+			currentObjectUrl = objectUrl;
+			imageElement.hidden = false;
+			statusElement.hidden = true;
+			renderImageFinders();
+		}
+
+		async function loadImage(avoidCurrentImage = false) {
+			const previousImageId = currentImageId;
+			const previousImagePage = currentImagePage;
+			currentAnswer = '';
+			currentImageId = '';
+			const dates = [];
+			const savedSelection = savedImageSelection();
+			if (avoidCurrentImage) {
+				for (let attempt = 0; attempt < 20; attempt += 1) dates.push(randomArchivedDate());
+			} else {
+				if (savedSelection) dates.push(new Date(savedSelection.date));
+				for (let attempt = 0; attempt < 5; attempt += 1) dates.push(archivedDateForAttempt(attempt));
+			}
+			for (const date of dates) {
+				if (avoidCurrentImage && dateKey(date) === currentArchiveDate) continue;
 				try {
 					const response = await fetch(`${feedUrl}/${dateKey(date)}`);
 					if (!response.ok) throw new Error(`Wikimedia returned ${response.status}`);
 					const data = await response.json();
 					if (!data.image || (!data.image.thumbnail && !data.image.image)) throw new Error('The selected date has no image');
-					showImage(data.image);
+					const candidateImageId = data.image.title || data.image.image || data.image.thumbnail?.source || '';
+					if (avoidCurrentImage && candidateImageId === previousImageId) continue;
+					await showImage(data.image);
+					if (previousImagePage && candidateImageId !== previousImageId) {
+						localStorage.setItem(previousImageStorageKey, JSON.stringify({ url: previousImagePage }));
+						showPreviousImageLink();
+					}
+					currentArchiveDate = dateKey(date);
+					currentImageRefreshedAt = savedSelection?.date === date.toISOString() && Number.isFinite(savedSelection.refreshedAt) ? savedSelection.refreshedAt : Date.now();
+					localStorage.setItem(selectedImageStorageKey, JSON.stringify({ day: selectionDay(), date: date.toISOString(), refreshedAt: currentImageRefreshedAt }));
+					renderImageFinders();
 					return;
 				} catch (error) {
 					console.warn(`Could not load archive date ${dateKey(date)}`, error);
@@ -133,10 +695,27 @@
 			statusElement.textContent = 'The image could not be loaded. Please refresh to try another archived day.';
 		}
 
+		window.addEventListener('storage', event => {
+			if (event.key === 'imageQuizApprovalRequests' && isMasterUser()) renderApprovalRequests();
+			if (event.key === imageFindersStorageKey) renderImageFinders();
+			if (event.key === previousImageStorageKey) showPreviousImageLink();
+			if (event.key !== selectedImageStorageKey || !event.newValue) return;
+			try {
+				const saved = JSON.parse(event.newValue);
+				if (saved.day === selectionDay() && saved.date && dateKey(new Date(saved.date)) !== currentArchiveDate) loadImage();
+			} catch (error) {
+				console.warn('Could not apply the shared image selection', error);
+			}
+		});
+
+		imageElement.addEventListener('contextmenu', event => event.preventDefault());
+		imageElement.addEventListener('dragstart', event => event.preventDefault());
+
 		function scheduleMidnightRefresh() {
 			const now = new Date();
-			const nextMidnight = new Date(now);
-			nextMidnight.setUTCHours(24, 0, 0, 0);
+			const nowInNzst = nzstNow();
+			const nextMidnightInNzst = new Date(Date.UTC(nowInNzst.getUTCFullYear(), nowInNzst.getUTCMonth(), nowInNzst.getUTCDate() + 1));
+			const nextMidnight = new Date(nextMidnightInNzst.getTime() - nzstOffsetMilliseconds);
 			setTimeout(() => {
 				loadImage();
 				scheduleMidnightRefresh();
@@ -144,6 +723,8 @@
 		}
 
 		loadImage();
+		updateAccountUi();
+		showPreviousImageLink();
 		scheduleMidnightRefresh();
 	</script>
 </body>
