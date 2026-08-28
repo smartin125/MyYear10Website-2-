@@ -202,6 +202,8 @@
 		</section>
 	</main>
 
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="supabase-config.js"></script>
 	<script>
 		const feedUrl = 'https://api.wikimedia.org/feed/v1/wikipedia/en/featured';
 		const imageElement = document.querySelector('#image');
@@ -251,17 +253,16 @@
 		const selectedImageStorageKey = 'imageQuizSelectedImage';
 		const previousImageStorageKey = 'imageQuizPreviousImage';
 		const imageFindersStorageKey = 'imageQuizFinders';
-		let loggedInUser = localStorage.getItem('imageQuizUser');
+		let loggedInUser = null;
 		const masterUsername = 'Masterkey';
-		const masterPassword = '123456789';
 		const nzstOffsetMilliseconds = 12 * 60 * 60 * 1000;
 
-		function readAccounts() { return JSON.parse(localStorage.getItem('imageQuizAccounts') || '{}'); }
-		function readApprovedUsers() { return JSON.parse(localStorage.getItem('imageQuizApprovedUsers') || '{}'); }
-		function readApprovalRequests() { return JSON.parse(localStorage.getItem('imageQuizApprovalRequests') || '{}'); }
-		function readScores() { return JSON.parse(localStorage.getItem('imageQuizScores') || '{}'); }
-		function readFirstGuesses() { return JSON.parse(localStorage.getItem('imageQuizFirstGuesses') || '{}'); }
-		function readImageFinders() { return JSON.parse(localStorage.getItem(imageFindersStorageKey) || '{}'); }
+		function readAccounts() { return imageGame.readAccounts(); }
+		function readApprovedUsers() { return imageGame.readApprovedUsers(); }
+		function readApprovalRequests() { return imageGame.readApprovalRequests(); }
+		function readScores() { return imageGame.readScores(); }
+		function readFirstGuesses() { return imageGame.readFirstGuesses(); }
+		function readImageFinders() { return imageGame.readImageFinders(); }
 		function showPreviousImageLink() {
 			try {
 				const previousImage = JSON.parse(localStorage.getItem(previousImageStorageKey) || 'null');
@@ -273,32 +274,11 @@
 				console.warn('Could not read the previous image link', error);
 			}
 		}
-		function isMasterUser() { return loggedInUser === masterUsername; }
+		function isMasterUser() { return imageGame.cache.profiles[loggedInUser]?.role === 'admin'; }
 		function escapeHtml(value) { return value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]); }
-		function approveUsername(username) {
-			const approvedUsers = readApprovedUsers();
-			approvedUsers[username] = true;
-			localStorage.setItem('imageQuizApprovedUsers', JSON.stringify(approvedUsers));
-			const requests = readApprovalRequests();
-			delete requests[username];
-			localStorage.setItem('imageQuizApprovalRequests', JSON.stringify(requests));
-		}
+		function approveUsername(username) { return imageGame.approve(username); }
 		function deleteAccount(username) {
-			const accounts = readAccounts();
-			const approvedUsers = readApprovedUsers();
-			const requests = readApprovalRequests();
-			const scores = readScores();
-			const completed = JSON.parse(localStorage.getItem('imageQuizCompleted') || '{}');
-			delete accounts[username];
-			delete approvedUsers[username];
-			delete requests[username];
-			delete scores[username];
-			Object.keys(completed).filter(key => key.startsWith(`${username}:`)).forEach(key => delete completed[key]);
-			localStorage.setItem('imageQuizAccounts', JSON.stringify(accounts));
-			localStorage.setItem('imageQuizApprovedUsers', JSON.stringify(approvedUsers));
-			localStorage.setItem('imageQuizApprovalRequests', JSON.stringify(requests));
-			localStorage.setItem('imageQuizScores', JSON.stringify(scores));
-			localStorage.setItem('imageQuizCompleted', JSON.stringify(completed));
+			return imageGame.deleteUser(username);
 		}
 		function renderApprovalRequests() {
 			if (!isMasterUser()) return;
@@ -315,11 +295,6 @@
 			const finders = readImageFinders()[currentImageId] || [];
 			findersEmpty.hidden = finders.length > 0;
 			findersList.innerHTML = finders.map(finder => `<li>${escapeHtml(finder.username)} found it in ${formatElapsedTime(finder.seconds)}.</li>`).join('');
-		}
-		async function passwordHash(password) {
-			const bytes = new TextEncoder().encode(password);
-			const digest = await crypto.subtle.digest('SHA-256', bytes);
-			return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
 		}
 		function updateAccountUi() {
 			const loggedIn = Boolean(loggedInUser);
@@ -339,10 +314,10 @@
 			renderApprovalRequests();
 		}
 
-		accountToggle.addEventListener('click', () => {
+		accountToggle.addEventListener('click', async () => {
 			if (loggedInUser) {
+				await imageGame.client.auth.signOut();
 				loggedInUser = null;
-				localStorage.removeItem('imageQuizUser');
 				loginPanel.classList.remove('visible');
 				account.classList.remove('login-open');
 				updateAccountUi();
@@ -375,15 +350,8 @@
 				accountMessage.classList.add('error');
 				return;
 			}
-			const accounts = readAccounts();
-			const currentHash = await passwordHash(currentPassword.value);
-			if (accounts[loggedInUser] !== currentHash) {
-				accountMessage.textContent = 'The current password is incorrect.';
-				accountMessage.classList.add('error');
-				return;
-			}
-			accounts[loggedInUser] = await passwordHash(newPassword.value);
-			localStorage.setItem('imageQuizAccounts', JSON.stringify(accounts));
+			const { error } = await imageGame.client.auth.updateUser({ password: newPassword.value });
+			if (error) throw error;
 			accountMessage.textContent = 'Password changed successfully.';
 			accountMessage.classList.remove('error');
 			passwordChangeForm.reset();
@@ -391,7 +359,7 @@
 			startPasswordChange.hidden = false;
 		});
 
-		requestForm.addEventListener('submit', event => {
+		requestForm.addEventListener('submit', async event => {
 			event.preventDefault();
 			const username = requestedUsername.value.trim();
 			if (!username || username === masterUsername) {
@@ -403,9 +371,7 @@
 				requestMessage.textContent = 'That username is already approved.';
 				return;
 			}
-			const requests = readApprovalRequests();
-			requests[username] = true;
-			localStorage.setItem('imageQuizApprovalRequests', JSON.stringify(requests));
+			await imageGame.requestApproval(username);
 			requestMessage.classList.remove('error');
 			requestMessage.textContent = 'Approval request sent to the administrator.';
 			requestedUsername.value = '';
@@ -421,35 +387,21 @@
 					accountMessage.classList.add('error');
 					return;
 				}
-				if (username === masterUsername) {
-					if (password !== masterPassword) throw new Error('master-credentials');
-					loggedInUser = masterUsername;
-					localStorage.setItem('imageQuizUser', masterUsername);
-					accountMessage.classList.remove('error');
-					accountMessage.textContent = '';
-					loginPanel.classList.remove('visible');
-					account.classList.remove('login-open');
-					loginForm.reset();
-					updateAccountUi();
-					return;
-				}
 				const approvedUsers = readApprovedUsers();
 				if (!approvedUsers[username]) {
 					accountMessage.textContent = 'This username has not been approved by the administrator.';
 					accountMessage.classList.add('error');
 					return;
 				}
-				const accounts = readAccounts();
-				const hash = await passwordHash(password);
-				if (accounts[username] && accounts[username] !== hash) {
-					accountMessage.textContent = 'That username and password do not match.';
-					accountMessage.classList.add('error');
-					return;
-				}
-				accounts[username] = hash;
-				localStorage.setItem('imageQuizAccounts', JSON.stringify(accounts));
-				loggedInUser = username;
-				localStorage.setItem('imageQuizUser', username);
+				let { data, error } = await imageGame.client.auth.signInWithPassword({ email: imageGame.usernameEmail(username), password });
+				if (error && error.message.includes('Invalid login credentials')) {
+					const signup = await imageGame.client.auth.signUp({ email: imageGame.usernameEmail(username), password, options: { data: { username } } });
+					if (signup.error) throw error;
+					const profile = await imageGame.client.from('image_game_profiles').insert({ id: signup.data.user.id, username, approved: true });
+					if (profile.error) throw profile.error;
+					data = signup.data;
+				} else if (error) throw error;
+				loggedInUser = data.user.user_metadata.username || username;
 				accountMessage.classList.remove('error');
 				accountMessage.textContent = `Logged in as ${username}.`;
 				loginPanel.classList.remove('visible');
@@ -457,7 +409,7 @@
 				loginForm.reset();
 				updateAccountUi();
 			} catch (error) {
-				accountMessage.textContent = error.message === 'master-credentials' ? 'That master password is incorrect.' : 'Login is unavailable in this browser context. Please use a local web server.';
+				accountMessage.textContent = error.message || 'Login is unavailable. Check your connection and try again.';
 				accountMessage.classList.add('error');
 			}
 		});
@@ -498,7 +450,7 @@
 			renderApprovalRequests();
 		});
 
-		pointsForm.addEventListener('submit', event => {
+		pointsForm.addEventListener('submit', async event => {
 			event.preventDefault();
 			if (!isMasterUser()) return;
 			const username = pointsUsername.value.trim();
@@ -507,9 +459,7 @@
 				masterMessage.textContent = 'Enter another username and a whole number of zero or more points.';
 				return;
 			}
-			const scores = readScores();
-			scores[username] = points;
-			localStorage.setItem('imageQuizScores', JSON.stringify(scores));
+			await imageGame.setScore(username, points);
 			masterMessage.textContent = `${username} now has ${points} point${points === 1 ? '' : 's'}.`;
 			pointsForm.reset();
 			pointsValue.value = points;
@@ -528,7 +478,7 @@
 			}
 		});
 
-		answerForm.addEventListener('submit', event => {
+		answerForm.addEventListener('submit', async event => {
 			event.preventDefault();
 			challengeMessage.classList.remove('error');
 			if (isMasterUser()) {
@@ -545,27 +495,16 @@
 				challengeMessage.classList.add('error');
 				return;
 			}
-			const scores = readScores();
-			const completed = JSON.parse(localStorage.getItem('imageQuizCompleted') || '{}');
-			if (completed[`${loggedInUser}:${currentImageId}`]) {
+			if (imageGame.cache.completed[`${loggedInUser}:${currentImageId}`]) {
 				challengeMessage.textContent = 'You already scored this image.';
 				return;
 			}
 			if (answerElement.value.trim().toLocaleLowerCase() === currentAnswer.trim().toLocaleLowerCase()) {
-				const finders = readImageFinders();
-				const firstGuesses = readFirstGuesses();
-				const pointsAwarded = firstGuesses[currentImageId] ? 1 : 2;
-				scores[loggedInUser] = (scores[loggedInUser] || 0) + pointsAwarded;
-				if (!firstGuesses[currentImageId]) {
-					firstGuesses[currentImageId] = loggedInUser;
-					localStorage.setItem('imageQuizFirstGuesses', JSON.stringify(firstGuesses));
+				const pointsAwarded = await imageGame.submitScore(loggedInUser, currentImageId, Math.max(0, Math.floor((Date.now() - currentImageRefreshedAt) / 1000)));
+				if (!pointsAwarded) {
+					challengeMessage.textContent = 'You already scored this image.';
+					return;
 				}
-				completed[`${loggedInUser}:${currentImageId}`] = true;
-				finders[currentImageId] = finders[currentImageId] || [];
-				finders[currentImageId].push({ username: loggedInUser, seconds: Math.max(0, Math.floor((Date.now() - currentImageRefreshedAt) / 1000)) });
-				localStorage.setItem('imageQuizScores', JSON.stringify(scores));
-				localStorage.setItem('imageQuizCompleted', JSON.stringify(completed));
-				localStorage.setItem(imageFindersStorageKey, JSON.stringify(finders));
 				challengeMessage.textContent = `Correct! You earned ${pointsAwarded} points${pointsAwarded === 2 ? ' for being first' : ''}.`;
 				challengeMessage.classList.remove('error');
 				updateAccountUi();
@@ -723,10 +662,19 @@
 			}, nextMidnight - now);
 		}
 
-		loadImage();
-		updateAccountUi();
-		showPreviousImageLink();
-		scheduleMidnightRefresh();
+		(async () => {
+			try {
+				await imageGame.load();
+				const { data: { session } } = await imageGame.client.auth.getSession();
+				loggedInUser = session?.user?.user_metadata?.username || null;
+				loadImage();
+				updateAccountUi();
+				showPreviousImageLink();
+				scheduleMidnightRefresh();
+			} catch (error) {
+				statusElement.textContent = 'The shared game database is not configured yet. Run supabase-schema.sql in Supabase, then refresh.';
+			}
+		})();
 	</script>
 </body>
 </html>
