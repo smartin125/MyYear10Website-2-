@@ -402,6 +402,7 @@
 					data = signup.data;
 				} else if (error) throw error;
 				loggedInUser = data.user.user_metadata.username || username;
+				await imageGame.load();
 				accountMessage.classList.remove('error');
 				accountMessage.textContent = `Logged in as ${username}.`;
 				loginPanel.classList.remove('visible');
@@ -414,7 +415,7 @@
 			}
 		});
 
-		approvalForm.addEventListener('submit', event => {
+		approvalForm.addEventListener('submit', async event => {
 			event.preventDefault();
 			if (!isMasterUser()) return;
 			const username = approvedUsername.value.trim();
@@ -422,13 +423,13 @@
 				masterMessage.textContent = 'Enter a valid username other than Masterkey.';
 				return;
 			}
-			approveUsername(username);
+			await approveUsername(username);
 			masterMessage.textContent = `${username} is approved to log in.`;
 			approvedUsername.value = '';
 			renderApprovalRequests();
 		});
 
-		deleteForm.addEventListener('submit', event => {
+		deleteForm.addEventListener('submit', async event => {
 			event.preventDefault();
 			if (!isMasterUser()) return;
 			const username = deleteUsername.value.trim();
@@ -437,15 +438,15 @@
 				return;
 			}
 			if (!confirm(`Delete the account for ${username}?`)) return;
-			deleteAccount(username);
+			await deleteAccount(username);
 			masterMessage.textContent = `${username} has been deleted.`;
 			deleteUsername.value = '';
 		});
 
-		approvalRequests.addEventListener('click', event => {
+		approvalRequests.addEventListener('click', async event => {
 			const button = event.target.closest('[data-approve-username]');
 			if (!button || !isMasterUser()) return;
-			approveUsername(button.dataset.approveUsername);
+			await approveUsername(button.dataset.approveUsername);
 			masterMessage.textContent = `${button.dataset.approveUsername} is approved to log in.`;
 			renderApprovalRequests();
 		});
