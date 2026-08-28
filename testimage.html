@@ -250,7 +250,6 @@
 		let currentImagePage = '';
 		let currentArchiveDate = '';
 		let currentImageRefreshedAt = 0;
-		const selectedImageStorageKey = 'imageQuizSelectedImage';
 		const previousImageStorageKey = 'imageQuizPreviousImage';
 		const imageFindersStorageKey = 'imageQuizFinders';
 		let loggedInUser = null;
@@ -284,7 +283,7 @@
 		function renderApprovalRequests() {
 			if (!isMasterUser()) return;
 			const requests = Object.keys(readApprovalRequests());
-			approvalRequests.innerHTML = requests.length ? `<p>Pending username requests:</p>${requests.map(username => `<div class="request-row"><span>${escapeHtml(username)}</span><button type="button" data-approve-username="${escapeHtml(username)}">Approve</button></div>`).join('')}` : '<p>No pending username requests.</p>';
+			approvalRequests.innerHTML = requests.length ? `<p>Pending username requests:</p>${requests.map(username => `<div class="request-row"><span>${escapeHtml(username)}</span><button type="button" data-approve-username="${escapeHtml(username)}">Allow</button><button type="button" data-decline-username="${escapeHtml(username)}">Decline</button></div>`).join('')}` : '<p>No pending username requests.</p>';
 		}
 		function formatElapsedTime(seconds) {
 			if (seconds < 60) return `${seconds} second${seconds === 1 ? '' : 's'}`;
@@ -448,9 +447,16 @@
 
 		approvalRequests.addEventListener('click', async event => {
 			const button = event.target.closest('[data-approve-username]');
-			if (!button || !isMasterUser()) return;
-			await approveUsername(button.dataset.approveUsername);
-			masterMessage.textContent = `${button.dataset.approveUsername} is approved to log in.`;
+			const declineButton = event.target.closest('[data-decline-username]');
+			if (!isMasterUser() || (!button && !declineButton)) return;
+			const username = button?.dataset.approveUsername || declineButton.dataset.declineUsername;
+			if (button) {
+				await approveUsername(username);
+				masterMessage.textContent = `${username} is approved to log in.`;
+			} else {
+				await imageGame.decline(username);
+				masterMessage.textContent = `${username}'s request was declined.`;
+			}
 			renderApprovalRequests();
 		});
 
@@ -550,16 +556,6 @@
 
 		function selectionDay() { return dateKey(nzstNow()); }
 
-		function savedImageSelection() {
-			try {
-				const saved = JSON.parse(localStorage.getItem(selectedImageStorageKey) || 'null');
-				if (saved?.day === selectionDay() && typeof saved.date === 'string' && !Number.isNaN(new Date(saved.date).getTime())) return saved;
-			} catch (error) {
-				console.warn('Could not read the saved image selection', error);
-			}
-			return '';
-		}
-
 		function imageAnswer(image) {
 			if (typeof image.title === 'string' && image.title.trim()) return cleanImageTitle(image.title);
 			if (typeof image.description === 'string' && image.description.trim()) return image.description.trim();
@@ -605,11 +601,12 @@
 			currentAnswer = '';
 			currentImageId = '';
 			const dates = [];
-			const savedSelection = savedImageSelection();
+			const fallbackDate = dateKey(archivedDateForAttempt(0));
+			const sharedSelection = avoidCurrentImage ? null : (await imageGame.getDailySelection(selectionDay(), fallbackDate))[0];
 			if (avoidCurrentImage) {
 				for (let attempt = 0; attempt < 20; attempt += 1) dates.push(randomArchivedDate());
 			} else {
-				if (savedSelection) dates.push(new Date(savedSelection.date));
+				if (sharedSelection?.archive_date) dates.push(new Date(`${sharedSelection.archive_date}T00:00:00Z`));
 				for (let attempt = 0; attempt < 5; attempt += 1) dates.push(archivedDateForAttempt(attempt));
 			}
 			for (const date of dates) {
@@ -627,8 +624,12 @@
 						showPreviousImageLink();
 					}
 					currentArchiveDate = dateKey(date);
-					currentImageRefreshedAt = savedSelection?.date === date.toISOString() && Number.isFinite(savedSelection.refreshedAt) ? savedSelection.refreshedAt : Date.now();
-					localStorage.setItem(selectedImageStorageKey, JSON.stringify({ day: selectionDay(), date: date.toISOString(), refreshedAt: currentImageRefreshedAt }));
+					if (avoidCurrentImage) {
+						const selection = await imageGame.setDailySelection(selectionDay(), currentArchiveDate);
+						currentImageRefreshedAt = new Date(selection[0].selected_at).getTime();
+					} else {
+						currentImageRefreshedAt = sharedSelection?.selected_at ? new Date(sharedSelection.selected_at).getTime() : Date.now();
+					}
 					renderImageFinders();
 					return;
 				} catch (error) {
@@ -639,18 +640,14 @@
 			statusElement.textContent = 'The image could not be loaded. Please refresh to try another archived day.';
 		}
 
-		window.addEventListener('storage', event => {
-			if (event.key === 'imageQuizApprovalRequests' && isMasterUser()) renderApprovalRequests();
-			if (event.key === imageFindersStorageKey) renderImageFinders();
-			if (event.key === previousImageStorageKey) showPreviousImageLink();
-			if (event.key !== selectedImageStorageKey || !event.newValue) return;
+		async function refreshSharedImage() {
 			try {
-				const saved = JSON.parse(event.newValue);
-				if (saved.day === selectionDay() && saved.date && dateKey(new Date(saved.date)) !== currentArchiveDate) loadImage();
+				const selection = (await imageGame.getDailySelection(selectionDay(), dateKey(archivedDateForAttempt(0))))[0];
+				if (selection?.archive_date && selection.archive_date !== currentArchiveDate) await loadImage();
 			} catch (error) {
-				console.warn('Could not apply the shared image selection', error);
+				console.warn('Could not refresh the shared image selection', error);
 			}
-		});
+		}
 
 		imageElement.addEventListener('contextmenu', event => event.preventDefault());
 		imageElement.addEventListener('dragstart', event => event.preventDefault());
@@ -663,6 +660,7 @@
 			setTimeout(() => {
 				loadImage();
 				scheduleMidnightRefresh();
+				setInterval(refreshSharedImage, 15000);
 			}, nextMidnight - now);
 		}
 
