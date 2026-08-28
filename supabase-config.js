@@ -6,18 +6,21 @@ const supabaseClient = window.supabase.createClient(
 
 window.imageGame = {
 	client: supabaseClient,
-	cache: { profiles: {}, scores: {}, finders: {}, completed: {}, firstGuesses: {}, requests: {} },
+	cache: { profiles: {}, profilesById: {}, scores: {}, finders: {}, completed: {}, firstGuesses: {}, requests: {} },
 	usernameEmail(username) { return `${username.toLowerCase().replace(/[^a-z0-9._-]/g, '')}@image-game.local`; },
 	async load() {
-		const [{ data: profiles }, { data: scores }, { data: finds }, { data: completed }, { data: guesses }, { data: requests }] = await Promise.all([
-			supabaseClient.from('image_game_profiles').select('username, approved, role'),
+		const results = await Promise.all([
+			supabaseClient.from('image_game_profiles').select('id, username, approved, role'),
 			supabaseClient.from('image_game_scores').select('username, points'),
 			supabaseClient.from('image_game_finds').select('image_id, username, seconds'),
 			supabaseClient.from('image_game_completed').select('username, image_id'),
 			supabaseClient.from('image_game_first_guesses').select('image_id, username'),
 			supabaseClient.from('image_game_approval_requests').select('username, approved')
 		]);
-		if (profiles) profiles.forEach(row => { this.cache.profiles[row.username] = row; });
+		const failedQuery = results.find(result => result.error);
+		if (failedQuery) throw failedQuery.error;
+		const [{ data: profiles }, { data: scores }, { data: finds }, { data: completed }, { data: guesses }, { data: requests }] = results;
+		if (profiles) profiles.forEach(row => { this.cache.profiles[row.username] = row; this.cache.profilesById[row.id] = row; });
 		if (scores) scores.forEach(row => { this.cache.scores[row.username] = row.points; });
 		if (finds) finds.forEach(row => { (this.cache.finders[row.image_id] ||= []).push({ username: row.username, seconds: row.seconds }); });
 		if (completed) completed.forEach(row => { this.cache.completed[`${row.username}:${row.image_id}`] = true; });

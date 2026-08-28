@@ -254,6 +254,7 @@
 		const previousImageStorageKey = 'imageQuizPreviousImage';
 		const imageFindersStorageKey = 'imageQuizFinders';
 		let loggedInUser = null;
+		let loggedInUserId = null;
 		const masterUsername = 'Masterkey';
 		const nzstOffsetMilliseconds = 12 * 60 * 60 * 1000;
 
@@ -274,7 +275,7 @@
 				console.warn('Could not read the previous image link', error);
 			}
 		}
-		function isMasterUser() { return imageGame.cache.profiles[loggedInUser]?.role === 'admin'; }
+		function isMasterUser() { return imageGame.cache.profilesById[loggedInUserId]?.role === 'admin'; }
 		function escapeHtml(value) { return value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[character]); }
 		function approveUsername(username) { return imageGame.approve(username); }
 		function deleteAccount(username) {
@@ -318,6 +319,7 @@
 			if (loggedInUser) {
 				await imageGame.client.auth.signOut();
 				loggedInUser = null;
+				loggedInUserId = null;
 				loginPanel.classList.remove('visible');
 				account.classList.remove('login-open');
 				updateAccountUi();
@@ -402,6 +404,7 @@
 					data = signup.data;
 				} else if (error) throw error;
 				loggedInUser = data.user.user_metadata.username || username;
+				loggedInUserId = data.user.id;
 				await imageGame.load();
 				accountMessage.classList.remove('error');
 				accountMessage.textContent = `Logged in as ${username}.`;
@@ -667,7 +670,8 @@
 			try {
 				await imageGame.load();
 				const { data: { session } } = await imageGame.client.auth.getSession();
-				loggedInUser = session?.user?.user_metadata?.username || null;
+				loggedInUser = session?.user?.user_metadata?.username || (session ? imageGame.cache.profilesById[session.user.id]?.username : null);
+				loggedInUserId = session?.user?.id || null;
 				loadImage();
 				updateAccountUi();
 				showPreviousImageLink();
