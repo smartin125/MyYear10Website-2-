@@ -71,6 +71,14 @@ a:hover {
     margin: 3em auto;
 }
 
+.topic-content-games {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.topic-content-games iframe {
+    width: 100%;
+}
+
 .topic-content-wide {
     display: grid;
     grid-template-columns: 1fr;
