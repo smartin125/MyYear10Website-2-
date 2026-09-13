@@ -159,4 +159,206 @@ a:hover {
     max-width: 320px; /* Adjust this number to perfectly match your layout's column widths */
 }
 
+.sticky-box {
+  position: sticky;
+  top: 0px; /* Distance from top when it sticks */
+}
 
+/* General Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+body {
+  background-color: #f4f4f4;
+}
+
+.page-with-navbar {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-with-navbar .hero {
+  order: 1;
+}
+
+.page-with-navbar .navbar {
+  order: 2;
+}
+
+.page-with-navbar .topic {
+  order: 3;
+}
+
+.page-with-navbar .footer {
+  order: 4;
+}
+
+.page-with-navbar .topic-title {
+  display: none;
+}
+
+/* Navbar Layout */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: rgb(8, 72, 49);
+}
+
+.nav-logo {
+  color: #fff;
+  font-size: 1.5rem;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  list-style: none;
+}
+
+.nav-item {
+  margin-left: 2rem;
+}
+
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-link {
+  color: #fff;
+  background: none;
+  border: 0;
+  text-decoration: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.nav-dropdown-toggle span {
+  display: inline-block;
+  margin-left: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  display: none;
+  min-width: 220px;
+  padding: 0.5rem 0;
+  list-style: none;
+  background-color: rgb(8, 72, 49);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.nav-dropdown:hover .dropdown-menu,
+.nav-dropdown:focus-within .dropdown-menu,
+.nav-dropdown.open .dropdown-menu {
+  display: block;
+}
+
+.nav-dropdown.open .nav-dropdown-toggle span {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu .nav-link {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.dropdown-menu .nav-link:hover,
+.dropdown-menu .nav-link:focus {
+  background-color: rgb(8, 72, 49);
+}
+
+/* Hide Hamburger Menu by Default on Desktop */
+.hamburger {
+  display: none;
+  cursor: pointer;
+}
+
+.bar {
+  display: block;
+  width: 25px;
+  height: 3px;
+  margin: 5px auto;
+  transition: all 0.3s ease-in-out;
+  background-color: #fff;
+}
+
+/* =======================================================
+   Mobile Responsive Layout (Screens smaller than 768px)
+   ======================================================= */
+@media (max-width: 768px) {
+  .hamburger {
+    display: block; /* Show the button */
+  }
+
+  /* Transform the menu into a vertical drop-down panel */
+  .nav-menu {
+    position: fixed;
+    left: -100%; /* Hidden off-screen by default */
+    top: 60px;
+    gap: 0;
+    flex-direction: column;
+    background-color: rgb(8, 72, 49);
+    width: 100%;
+    text-align: center;
+    transition: 0.3s;
+    box-shadow: 0 10px 27px rgba(0, 0, 0, 0.05);
+  }
+
+  /* When JS activates the class, slide the menu into view */
+  .nav-menu.active {
+    left: 0;
+  }
+
+  .nav-item {
+    margin: 2.5rem 0;
+  }
+
+  .nav-dropdown {
+    width: 100%;
+  }
+
+  .nav-dropdown-toggle {
+    width: 100%;
+  }
+
+  .dropdown-menu {
+    position: static;
+    width: 100%;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .dropdown-menu .nav-link {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-size: 1rem;
+  }
+
+  /* Optional: Turn the hamburger lines into an 'X' when active */
+  .hamburger.active .bar:nth-child(2) {
+    opacity: 0;
+  }
+  .hamburger.active .bar:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+  .hamburger.active .bar:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+  }
+}

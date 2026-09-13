@@ -9,7 +9,13 @@
     <link rel="icon" type="image/svg+xml" href="Images/SSquare.svg"/>
 </head>
 <!-- This is the main body of the website- ALL your content goes AFTER the <body> tag and before the </body> tag -->
-<body>
+<body class="page-with-navbar">
+
+    <nav class="navbar sticky-box">
+        <a href="index.html" class="nav-logo">Radical Rhombus</a>
+        <ul class="nav-menu"><li class="nav-item"><a href="index.html" class="nav-link">Home</a></li><li class="nav-item"><a href="aboutme.html" class="nav-link">About Me</a></li><li class="nav-item nav-dropdown"><button class="nav-link nav-dropdown-toggle" type="button" aria-expanded="false" aria-controls="topics-menu">Topics <span aria-hidden="true">▾</span></button><ul class="dropdown-menu" id="topics-menu"><li><a href="3dmodelling.html" class="nav-link">3D Modelling</a></li><li><a href="animation.html" class="nav-link">Animation</a></li><li><a href="computerscience.html" class="nav-link">Computer Science</a></li><li><a href="d4m.html" class="nav-link">Design for Manufacture</a></li><li><a href="gamedesign.html" class="nav-link">Game Development</a></li><li><a href="imageediting.html" class="nav-link">Image Creation</a></li><li><a href="programming.html" class="nav-link">Programming</a></li></ul></li></ul>
+        <div class="hamburger"><span class="bar"></span><span class="bar"></span><span class="bar"></span></div>
+    </nav>
 
     <!-- The Hero Section -------------------------------------------------------------------------------------- -->
     <section class="hero">
