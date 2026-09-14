@@ -179,6 +179,7 @@ body {
 .page-with-navbar {
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
 }
 
 .page-with-navbar .hero {
@@ -195,6 +196,7 @@ body {
 
 .page-with-navbar .footer {
   order: 4;
+  margin-top: auto;
 }
 
 .page-with-navbar .topic-title {
